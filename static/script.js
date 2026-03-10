@@ -1,8 +1,14 @@
 document.addEventListener('DOMContentLoaded', () => {
     const boardElement = document.getElementById('board');
-    const statusElement = document.getElementById('status');
-    const resetButton = document.getElementById('reset');
+    const statusText = document.getElementById('status-text');
+    const statusCard = document.getElementById('status-card');
     const gridSizeSelect = document.getElementById('grid-size');
+    const resetBtn = document.getElementById('reset');
+    const modal = document.getElementById('winner-modal');
+    const modalMsg = document.getElementById('winner-msg');
+    const modalSub = document.getElementById('winner-sub');
+    const modalIcon = document.getElementById('winner-icon');
+    const playAgainBtn = document.getElementById('play-again');
 
     let size = parseInt(gridSizeSelect.value);
     let board = Array(size * size).fill("-");
@@ -10,7 +16,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const createBoard = () => {
         boardElement.innerHTML = '';
-        document.documentElement.style.setProperty('--grid-size', size);
+        boardElement.className = `board size-${size}`;
         
         for (let i = 0; i < size * size; i++) {
             const cell = document.createElement('div');
@@ -24,11 +30,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const updateUI = () => {
         const cells = document.querySelectorAll('.cell');
         cells.forEach((cell, index) => {
-            cell.textContent = board[index] === "-" ? "" : board[index];
-            cell.classList.remove('x', 'o', 'taken');
-            if (board[index] !== "-") {
-                cell.classList.add(board[index].toLowerCase());
-                cell.classList.add('taken');
+            const val = board[index];
+            if (val !== "-" && !cell.classList.contains('taken')) {
+                cell.classList.add('taken', val.toLowerCase());
+                cell.innerHTML = `<span>${val}</span>`;
             }
         });
     };
@@ -36,19 +41,19 @@ document.addEventListener('DOMContentLoaded', () => {
     const handleCellClick = async (e) => {
         const index = parseInt(e.target.dataset.index);
 
-        if (board[index] !== "-" || !gameActive) return;
+        if (board[index] !== "-" || !gameActive || statusCard.classList.contains('thinking')) return;
 
         // Player move
         board[index] = "X";
         updateUI();
-        statusElement.textContent = "AI is thinking...";
+        
+        statusCard.classList.add('thinking');
+        statusText.textContent = "AI is thinking...";
 
         try {
             const response = await fetch('/move', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ board, size }),
             });
 
@@ -57,18 +62,36 @@ document.addEventListener('DOMContentLoaded', () => {
             updateUI();
 
             if (data.winner) {
-                gameActive = false;
-                if (data.winner === "Tie") {
-                    statusElement.textContent = "It's a Tie!";
-                } else {
-                    statusElement.textContent = `${data.winner} Wins!`;
-                }
+                showWinner(data.winner);
             } else {
-                statusElement.textContent = "Your turn (X)";
+                statusCard.classList.remove('thinking');
+                statusText.textContent = "Your turn";
             }
         } catch (error) {
             console.error('Error:', error);
-            statusElement.textContent = "Error connecting to server.";
+            statusText.textContent = "Connection error";
+            statusCard.classList.remove('thinking');
+        }
+    };
+
+    const showWinner = (winner) => {
+        gameActive = false;
+        statusCard.classList.remove('thinking');
+        statusText.textContent = "Game Over";
+        
+        modal.classList.remove('hidden');
+        if (winner === "Tie") {
+            modalIcon.textContent = "🤝";
+            modalMsg.textContent = "It's a Tie!";
+            modalSub.textContent = "Great minds think alike.";
+        } else if (winner === "X") {
+            modalIcon.textContent = "🏆";
+            modalMsg.textContent = "You Won!";
+            modalSub.textContent = "You've outsmarted the AI!";
+        } else {
+            modalIcon.textContent = "🤖";
+            modalMsg.textContent = "AI Won!";
+            modalSub.textContent = "The machine is learning...";
         }
     };
 
@@ -76,12 +99,15 @@ document.addEventListener('DOMContentLoaded', () => {
         size = parseInt(gridSizeSelect.value);
         board = Array(size * size).fill("-");
         gameActive = true;
+        modal.classList.add('hidden');
+        statusCard.classList.remove('thinking');
+        statusText.textContent = "Your turn";
         createBoard();
-        statusElement.textContent = "Your turn (X)";
     };
 
     gridSizeSelect.addEventListener('change', resetGame);
-    resetButton.addEventListener('click', resetGame);
+    resetBtn.addEventListener('click', resetGame);
+    playAgainBtn.addEventListener('click', resetGame);
 
     // Initial setup
     createBoard();

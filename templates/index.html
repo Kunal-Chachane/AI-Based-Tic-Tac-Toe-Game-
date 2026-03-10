@@ -3,26 +3,66 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Tic Tac Toe</title>
+    <title>AI Tic-Tac-Toe | Premium Edition</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
 </head>
 <body>
-    <div class="container">
-        <h1>Tic Tac Toe</h1>
-        <div class="controls">
-            <label for="grid-size">Grid Size: </label>
-            <select id="grid-size">
-                <option value="3">3x3</option>
-                <option value="4">4x4</option>
-                <option value="5">5x5</option>
-            </select>
-        </div>
-        <div id="status">Your turn (X)</div>
-        <div class="board" id="board">
-            <!-- Dynamic Grid -->
-        </div>
-        <button id="reset">Restart Game</button>
+    <div class="background-blobs">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
     </div>
+
+    <div class="app-container">
+        <header>
+            <div class="logo">
+                <span class="ai-badge">AI</span>
+                <h1>Tic Tac Toe</h1>
+            </div>
+            <div class="settings">
+                <div class="select-wrapper">
+                    <select id="grid-size">
+                        <option value="3">3 x 3</option>
+                        <option value="4">4 x 4</option>
+                        <option value="5">5 x 5</option>
+                    </select>
+                </div>
+                <button id="reset" class="icon-btn" title="Restart Game">
+                    <svg viewBox="0 0 24 24" width="24" height="24"><path fill="currentColor" d="M17.65,6.35C16.2,4.9 14.21,4 12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20C15.73,20 18.84,17.45 19.73,14H17.65C16.83,16.33 14.61,18 12,18A6,6 0 0,1 6,12A6,6 0 0,1 12,6C13.66,6 15.14,6.69 16.22,7.78L13,11H20V4L17.65,6.35Z"/></svg>
+                </button>
+            </div>
+        </header>
+
+        <main>
+            <div id="status-card" class="status-card">
+                <span class="status-dot"></span>
+                <span id="status-text">Your turn</span>
+            </div>
+
+            <div class="board-container">
+                <div id="board" class="board size-3">
+                    <!-- Cells generated via JS -->
+                </div>
+            </div>
+        </main>
+
+        <footer>
+            <p>Unbeatable AI powered by Minimax</p>
+            <p class="developer">Developed by <span class="name">Kunal Chachane</span></p>
+        </footer>
+    </div>
+
+    <div id="winner-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="winner-icon" id="winner-icon">🏆</div>
+            <h2 id="winner-msg">Winner!</h2>
+            <p id="winner-sub">You've mastered the game.</p>
+            <button id="play-again" class="primary-btn">Play Again</button>
+        </div>
+    </div>
+
     <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
 </html>

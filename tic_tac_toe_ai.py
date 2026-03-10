@@ -1,97 +1,90 @@
-# Tic-Tac-Toe with Minimax AI 
+import math
 
-board = ["-"] * 9
+def get_win_patterns(size):
+    """Generate all winning patterns for an N x N grid."""
+    patterns = []
+    # Rows
+    for i in range(size):
+        patterns.append(tuple(range(i * size, (i + 1) * size)))
+    # Columns
+    for i in range(size):
+        patterns.append(tuple(range(i, size * size, size)))
+    # Diagonals
+    patterns.append(tuple(range(0, size * size, size + 1)))
+    patterns.append(tuple(range(size - 1, size * size - 1, size - 1)))
+    return patterns
 
-def show():
-    """Display the current board."""
-    print(board[0], board[1], board[2])
-    print(board[3], board[4], board[5])
-    print(board[6], board[7], board[8])
-    print()
-
-
-def winner():
+def check_winner(board, size):
     """Return the game result: 'X', 'O', 'Tie', or None."""
-    win_patterns = [
-        (0, 1, 2), (3, 4, 5), (6, 7, 8),
-        (0, 3, 6), (1, 4, 7), (2, 5, 8),
-        (0, 4, 8), (2, 4, 6)
-    ]
-    for a, b, c in win_patterns:
-        if board[a] == board[b] == board[c] != "-":
-            return board[a]
+    win_patterns = get_win_patterns(size)
+    for pattern in win_patterns:
+        first = board[pattern[0]]
+        if first != "-" and all(board[i] == first for i in pattern):
+            return first
     if "-" not in board:
         return "Tie"
     return None
 
+def evaluate(board, size):
+    """Heuristic evaluation for depth-limited minimax."""
+    # This is a simple heuristic: check for near-wins
+    # For now, we'll stick to terminal states mostly, 
+    # but we can return 0 if we hit depth limit.
+    return 0
 
-def minimax(ai_turn):
-    """Minimax algorithm to find optimal move."""
-    w = winner()
-
-    if w == "O": return 1
-    if w == "X": return -1
+def minimax(board, size, depth, is_maximizing, alpha, beta, max_depth):
+    w = check_winner(board, size)
+    if w == "O": return 100 + depth
+    if w == "X": return -100 - depth
     if w == "Tie": return 0
+    if depth >= max_depth:
+        return evaluate(board, size)
 
-    scores = []
-    for i in range(9):
-        if board[i] == "-":
-            board[i] = "O" if ai_turn else "X"
-            score = minimax(not ai_turn)
-            board[i] = "-"
-            scores.append(score)
+    if is_maximizing:
+        best_score = -math.inf
+        for i in range(size * size):
+            if board[i] == "-":
+                board[i] = "O"
+                score = minimax(board, size, depth + 1, False, alpha, beta, max_depth)
+                board[i] = "-"
+                best_score = max(score, best_score)
+                alpha = max(alpha, score)
+                if beta <= alpha:
+                    break
+        return best_score
+    else:
+        best_score = math.inf
+        for i in range(size * size):
+            if board[i] == "-":
+                board[i] = "X"
+                score = minimax(board, size, depth + 1, True, alpha, beta, max_depth)
+                board[i] = "-"
+                best_score = min(score, best_score)
+                beta = min(beta, score)
+                if beta <= alpha:
+                    break
+        return best_score
 
-    return max(scores) if ai_turn else min(scores)
-
-
-def ai_move():
-    """AI chooses best move using minimax."""
-    best_score = -10
+def get_ai_move(board, size):
+    """AI chooses best move using minimax with alpha-beta pruning."""
+    best_score = -math.inf
     best_move = None
+    
+    # Adjust depth based on grid size for performance
+    if size == 3:
+        max_depth = 10
+    elif size == 4:
+        max_depth = 6
+    else:
+        max_depth = 4
 
-    for i in range(9):
+    for i in range(size * size):
         if board[i] == "-":
             board[i] = "O"
-            score = minimax(False)
+            score = minimax(board, size, 0, False, -math.inf, math.inf, max_depth)
             board[i] = "-"
             if score > best_score:
                 best_score = score
                 best_move = i
-
-    board[best_move] = "O"
-
-
-show()
-
-while True:
-    try:
-        p = int(input("Enter 1-9: ")) - 1
-        if p not in range(9):
-            print("Choose a number from 1 to 9.")
-            continue
-        if board[p] != "-":
-            print("That spot is taken.")
-            continue
-        board[p] = "X"
-    except ValueError:
-        print("Enter a valid number.")
-        continue
-
-    show()
-    if winner():
-        break
-
-    ai_move()
-    print("AI move:")
-    show()
-    if winner():
-        break
-
-result = winner()
-
-if result == "X":
-    print("Result: Player wins!")
-elif result == "O":
-    print("Result: AI wins!")
-else:
-    print("Result: Tie game.")
+    
+    return best_move

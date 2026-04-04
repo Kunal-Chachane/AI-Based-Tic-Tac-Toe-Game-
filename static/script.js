@@ -2,6 +2,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const boardElement = document.getElementById('board');
     const statusText = document.getElementById('status-text');
     const statusCard = document.getElementById('status-card');
+    const difficultySelect = document.getElementById('difficulty');
     const gridSizeSelect = document.getElementById('grid-size');
     const resetBtn = document.getElementById('reset');
     const modal = document.getElementById('winner-modal');
@@ -17,7 +18,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const createBoard = () => {
         boardElement.innerHTML = '';
         boardElement.className = `board size-${size}`;
-        
+
         for (let i = 0; i < size * size; i++) {
             const cell = document.createElement('div');
             cell.classList.add('cell');
@@ -28,13 +29,13 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const updateUI = () => {
-        const cells = document.querySelectorAll('.cell');
+        const cells = boardElement.querySelectorAll('.cell');
         cells.forEach((cell, index) => {
             const val = board[index];
-            if (val !== "-" && !cell.classList.contains('taken')) {
-                cell.classList.add('taken', val.toLowerCase());
-                cell.innerHTML = `<span>${val}</span>`;
-            }
+            cell.classList.toggle('taken', val !== "-");
+            cell.classList.toggle('x', val === "X");
+            cell.classList.toggle('o', val === "O");
+            cell.innerHTML = val === "-" ? '' : `<span>${val}</span>`;
         });
     };
 
@@ -43,10 +44,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (board[index] !== "-" || !gameActive || statusCard.classList.contains('thinking')) return;
 
-        // Player move
         board[index] = "X";
         updateUI();
-        
+
         statusCard.classList.add('thinking');
         statusText.textContent = "AI is thinking...";
 
@@ -54,8 +54,16 @@ document.addEventListener('DOMContentLoaded', () => {
             const response = await fetch('/move', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ board, size }),
+                body: JSON.stringify({
+                    board,
+                    size,
+                    difficulty: difficultySelect.value,
+                }),
             });
+
+            if (!response.ok) {
+                throw new Error(`Request failed with status ${response.status}`);
+            }
 
             const data = await response.json();
             board = data.board;
@@ -109,6 +117,5 @@ document.addEventListener('DOMContentLoaded', () => {
     resetBtn.addEventListener('click', resetGame);
     playAgainBtn.addEventListener('click', resetGame);
 
-    // Initial setup
     createBoard();
 });
